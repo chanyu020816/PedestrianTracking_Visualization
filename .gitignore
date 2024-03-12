@@ -1,3 +1,15 @@
 *.jpeg
 *.png
+*iml
+*xml
 guienv
+.DS_Store
+*.pt
+*.mp4
+*.json
+*.ipynb_checkpoints
+__pycache__
+.venv
+*.pb
+mars*
+*.MOV
