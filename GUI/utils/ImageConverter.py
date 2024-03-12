@@ -12,4 +12,4 @@ def pic2str(file):
 
 
 if __name__ == '__main__':
-    pic2str("./images/")
+    pic2str("../images/")
