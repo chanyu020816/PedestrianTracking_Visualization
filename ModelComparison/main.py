@@ -1,28 +1,23 @@
 import os
 import argparse
 import cv2
+import numpy as np
 from ultralytics import YOLO
 from ultralytics import RTDETR
 import time
-
+import torch
+from torchvision import transforms
+from PIL import Image
+import matplotlib.pyplot as plt
 from tracker import Tracker
 
-class MOT:
-    def __init__(self, model: str, video_name: str, save_video: bool = True,
-                 yolo: bool = False, detection_threshold: float = 0.5):
-        self.model_path = os.path.join('./ObjectDetectionModel', f'{model}.pt')
-        self.model = YOLO(self.model_path) if model.lower().startswith('yolo') else  RTDETR(self.model_path)
-
-        self.video_path = os.path.join('.', 'data', f'{video_name}.mp4')
-        self.cap = cv2.VideoCapture(self.video_path)
-        self.save_video = save_video
-        if self.save_video:
-            self.video_output_path: str = os.path.join('./Output', f'{model}_output.mp4')
-        else:
-            self.video_output_path: str = ''
-        self.tracker = Tracker()
+class Detector:
+    def __init__(self, model: str, input_name: str, save: bool = True, detection_threshold: float = 0.5):
+        self.model_path = os.path.join('./ObjectDetectionModel', model)
+        self.model = YOLO(self.model_path) if model.lower().startswith('yolo') else RTDETR(self.model_path)
+        self.input_path = os.path.join('.', 'data', input_name)
+        self.save = save
         self.detection_threshold = detection_threshold
-        self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.start_time = None
         self.end_time = None
 
@@ -34,6 +29,14 @@ class MOT:
 
     def get_elapsed_time(self):
         return self.end_time - self.start_time if self.start_time and self.end_time else None
+
+class VideoTracker(Detector):
+    def __init__(self, model: str, input_name: str, save: bool = True, detection_threshold: float = 0.5):
+        super().__init__(model, input_name, save, detection_threshold)
+        self.cap = cv2.VideoCapture(self.input_path)
+        self.video_output_path: str = os.path.join('./Output', f'{model}_output.mp4') if self.save else None
+        self.tracker = Tracker()
+        self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     def run(self) -> None:
         print(f'Total frames: {self.total_frames}')
@@ -85,21 +88,66 @@ class MOT:
         self.model.model.eval()
         self.model.info(detailed=False)
 
-def main(model: str, video_name: str, save_video: bool = True,
-         yolo: bool = False, detection_threshold: float = 0.5) -> None:
-    mot = MOT(model = model, video_name = video_name, save_video = save_video,
-              yolo = yolo, detection_threshold = detection_threshold)
-    # mot.run()
-    mot.get_model_summary()
+class ImageDetection(Detector):
+    def  __init__(self, model: str, input_name: str, save: bool = True, detection_threshold: float = 0.5):
+        super().__init__(model, input_name, save, detection_threshold)
+        self.image = Image.open(self.input_path).convert("RGB")
+        self.image_sizes = self.image.size[::-1]
+        self.image_np = np.array(self.image)
+        self.image_output_path: str = os.path.join('./Output', f'{model}_output.png') if self.save else None
+        self.plt = plt
+
+    def _predict(self):
+        results = self.model(self.image_np, classes=[0])
+        detections = []
+        for r in results[0].boxes.data.tolist():
+            x1, y1, x2, y2, score, class_id = r
+            x1 = int(x1)
+            x2 = int(x2)
+            y1 = int(y1)
+            y2 = int(y2)
+            class_id = int(class_id)
+            if score > self.detection_threshold:
+                detections.append([x1, y1, x2, y2, score])
+        return detections
+
+    def run(self) -> None:
+        detections_result = self._predict()
+        self.plt.figure(figsize=(16,10))
+        self.plt.imshow(self.image_np)
+        count = 1
+        for d in detections_result:
+            x1, y1, x2, y2, score = d
+            self.plt.text(x1, y1, f'{count}', fontsize=12, bbox=dict(facecolor='yellow', alpha=0.5))
+            count += 1
+        self.plt.text(13, 20, f'Total count: {count - 1}', fontsize=12)
+        self.plt.axis('off')
+        self.plt.savefig(self.image_output_path, bbox_inches='tight')
+
+    def get_model_summary(self) -> None:
+        self.model.model.eval()
+        self.model.info(detailed=False)
+        
+
+def main(model: str, name: str, save: bool = True,
+         video: bool = False, detection_threshold: float = 0.5) -> None:
+    if video:
+        detector = VideoTracker(model = model, input_name = name, save = save, detection_threshold = detection_threshold)
+    else:
+        detector = ImageDetection(model = model, input_name = name, save = save, detection_threshold = detection_threshold)
+    detector.run()
+    detector.get_model_summary()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Specify the model to use.")
-    parser.add_argument("--model", type=str, default='yolov8n')
-    parser.add_argument("--video_name", type=str, default='people')
-    parser.add_argument("--save_video", type=bool, default=True)
-    parser.add_argument("--yolo", type=bool, default=True)
+    parser.add_argument("--model", type=str, default='yolov8n.pt')
+    parser.add_argument("--type", type=str, default='image', choices=['image', 'video'])
+    parser.add_argument("--input_name", type=str, default='people.mp4')
+    parser.add_argument("--save", type=bool, default=True)
+    parser.add_argument("--video", type=bool, default=True)
     parser.add_argument("--detection_threshold", type=float, default=0.5)
 
     args = parser.parse_args()
-    main(args.model, args.video_name, args.save_video, args.yolo, args.detection_threshold)
+    main(args.model, args.input_name, args.save, args.video, args.detection_threshold)
 
