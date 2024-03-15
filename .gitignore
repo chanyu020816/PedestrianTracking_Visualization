@@ -1,4 +1,5 @@
 *.jpeg
+*.jpg
 *.png
 *iml
 *xml
@@ -13,3 +14,6 @@ __pycache__
 *.pb
 mars*
 *.MOV
+.idea
+note.md
+*.txt
