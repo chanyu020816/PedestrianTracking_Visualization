@@ -1,0 +1,7 @@
+path: /home/chanyu/Desktop/PedestrianDetectModel/data 
+train: aug/images
+val: val/images
+test: test/images
+
+names: 
+  0: Person

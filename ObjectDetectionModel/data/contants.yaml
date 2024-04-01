@@ -1,0 +1,7 @@
+inp_img_pth : train/images
+inp_lab_pth : train/labels
+out_img_pth : aug_train/images
+out_lab_pth : aug_train/labels
+transformed_file_name : aug
+CLASSES : ['person']
+aug_size : 10
