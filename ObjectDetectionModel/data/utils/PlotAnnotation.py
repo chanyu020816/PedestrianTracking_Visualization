@@ -19,9 +19,9 @@ def draw_bounding_boxes(image_path, label_path, output_path=None):
         x_center, y_center, width, height = map(float, elements[1:])
         
         # Convert YOLO format to OpenCV format
-        height, width, _ = image.shape
-        x1 = int((x_center - width / 2) * width)
-        y1 = int((y_center - height / 2) * height)
+        h, w, _ = image.shape
+        x1 = int((x_center - width / 2) * w)
+        y1 = int((y_center - height / 2) * h)
         x2 = int(x1 + width * width)
         y2 = int(y1 + height * height)
 
