@@ -1,6 +1,7 @@
 import tkinter as tk
 from Constant import *
 from PedestrianTrackingPage import PedestrianTrackingPage
+
 class MainView(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -13,9 +14,9 @@ class MainView(tk.Tk):
             "PedestrianTrackingPage": PedestrianTrackingPage(self.container, self),
         }
 
-        self.initial()
+        self.start()
 
-    def initial(self):
+    def start(self):
         self.pages["PedestrianTrackingPage"].grid(row=0, column=0, sticky="nsew")
 
 if __name__ == "__main__":
