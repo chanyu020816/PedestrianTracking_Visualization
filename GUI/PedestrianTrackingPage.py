@@ -55,6 +55,8 @@ class PedestrianTrackingPage(tk.Frame):
         self.summary_title.place(x=1490, y=25)
         self.create_pedestrian_tracking_page()
 
+        self.display_summary()
+
     def create_pedestrian_tracking_page(self):
         style = ttk.Style()
         style.theme_use('clam')
@@ -66,16 +68,15 @@ class PedestrianTrackingPage(tk.Frame):
         video_path = filedialog.askopenfilename(
             filetypes=[('MOV Files', '*.mov'), ('MP4 Files', '*.mp4')]
         )
-        print(video_path)
         if video_path:
             self.cap = cv2.VideoCapture(video_path)
-            self.show_video()
+            self.show_video(True)
 
 
     def close_page(self):
         pass
 
-    def show_video(self):
+    def show_video(self, detect=False):
         if self.cap is not None:
             ret, frame = self.cap.read()
             video_width = 1340
@@ -85,17 +86,17 @@ class PedestrianTrackingPage(tk.Frame):
                 img = Image.fromarray(frame)
                 img = img.resize((video_width, video_height), Image.ANTIALIAS)
 
-                results = model(img, verbose=False, stream=True, device="mps", classes=[0])
-                for r in results:
-                    # print(random.randint(1, 1))
-                    boxes = r.boxes
-                    for box in boxes:
-                        x1, y1, x2, y2 = box.xyxy[0]
+                if detect:
+                    results = model(img, verbose=False, stream=True, device="mps", classes=[0])
+                    for r in results:
+                        boxes = r.boxes
+                        for box in boxes:
+                            x1, y1, x2, y2 = box.xyxy[0]
 
-                        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-                        img_t = cv2.rectangle(array(img), (x1, y1), (x2, y2), color=(0, 0, 0), thickness=2)
-                        img = Image.fromarray(img_t)
-                        img = img.resize((video_width, video_height), Image.ANTIALIAS)
+                            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                            img_t = cv2.rectangle(array(img), (x1, y1), (x2, y2), color=(0, 0, 0), thickness=2)
+                            img = Image.fromarray(img_t)
+                            img = img.resize((video_width, video_height), Image.ANTIALIAS)
 
                 photo = ImageTk.PhotoImage(image=img)
                 self.canvas.create_image(0, 0, anchor="nw", image=photo)
@@ -103,3 +104,30 @@ class PedestrianTrackingPage(tk.Frame):
 
                 self.window.update_idletasks()  # Update the GUI
                 ret, frame = self.cap.read()
+            self.cap.release()
+            self.cap = None
+            self.canvas.image = None
+            self.canvas.place(x=40, y=80)
+    def display_summary(self):
+        total_pedestrian = 72
+        dir711_count = 24
+        bus_stop_count = 32
+        school_count = 16
+        fps = 15
+        pedestrian_count_title = tk.Label(self, text=f"Total Pedestrian:{total_pedestrian:>11}",
+            font=("Canva Sans", 30, "bold"), bg="#FFFFFF", fg="#4471e3")
+        pedestrian_count_title.place(x=1390, y=85)
+        dir711_count_title = tk.Label(self, text=f"Direction 711:{dir711_count:>22}",
+            font=("Canva Sans", 28, "bold"), bg="#FFFFFF", fg="#4471e3")
+        dir711_count_title.place(x=1390, y=125)
+        bus_stop_count_title = tk.Label(self, text=f"Direction Bus Stop:{bus_stop_count:>10}",
+            font=("Canva Sans", 28, "bold"), bg="#FFFFFF", fg="#4471e3")
+        bus_stop_count_title.place(x=1390, y=165)
+        school_count_title = tk.Label(self, text=f"Direction School:{school_count:15}",
+            font=("Canva Sans", 28, "bold"), bg="#FFFFFF", fg="#4471e3")
+        school_count_title.place(x=1390, y=205)
+
+        fps_title = tk.Label(self, text=f"FPS: {fps}",
+            font=("Canva Sans", 20, "bold"), bg="#FFFFFF", fg="#4f4e4d")
+        fps_title.place(x=1520, y=715)
+
