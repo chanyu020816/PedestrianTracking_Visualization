@@ -12,6 +12,7 @@ from ultralytics import YOLO
 from Constant import *
 from Base64Image import PedestrianTrackingPageBG
 from numpy import array
+from utils.VideoTracking import *
 
 model = YOLO("yolov8n.pt")
 
@@ -33,6 +34,7 @@ class PedestrianTrackingPage(tk.Frame):
         self.grid_propagate(False)
         self.grid()
         self.cap = None
+        self.video_cfg = None
 
         background = tk.Canvas(self, bg="#FFFFFF", bd=0, borderwidth=0, border=0,
             relief="solid", width=1710, height=810, highlightthickness=0)
@@ -70,8 +72,9 @@ class PedestrianTrackingPage(tk.Frame):
         )
         if video_path:
             self.cap = cv2.VideoCapture(video_path)
+            fourcc, size, fps = get_video_cfg(video_path)
+            self.video_cfg = (fourcc, size, fps)
             self.show_video(True)
-
 
     def close_page(self):
         pass
@@ -87,8 +90,9 @@ class PedestrianTrackingPage(tk.Frame):
                 img = img.resize((video_width, video_height), Image.ANTIALIAS)
 
                 if detect:
-                    results = model(img, verbose=False, stream=True, device="mps", classes=[0])
-                    for r in results:
+                    """
+                     results = model(img, verbose=False, stream=True, device="mps", classes=[0])
+                     for r in results:
                         boxes = r.boxes
                         for box in boxes:
                             x1, y1, x2, y2 = box.xyxy[0]
@@ -97,6 +101,13 @@ class PedestrianTrackingPage(tk.Frame):
                             img_t = cv2.rectangle(array(img), (x1, y1), (x2, y2), color=(0, 0, 0), thickness=2)
                             img = Image.fromarray(img_t)
                             img = img.resize((video_width, video_height), Image.ANTIALIAS)
+                    """
+                    results = model.track(img, persist=True)
+
+                    # Visualize the results on the frame
+                    annotated_frame = results[0].plot()
+                    img = Image.fromarray(annotated_frame)
+                    img = img.resize((video_width, video_height), Image.ANTIALIAS)
 
                 photo = ImageTk.PhotoImage(image=img)
                 self.canvas.create_image(0, 0, anchor="nw", image=photo)
@@ -108,6 +119,7 @@ class PedestrianTrackingPage(tk.Frame):
             self.cap = None
             self.canvas.image = None
             self.canvas.place(x=40, y=80)
+
     def display_summary(self):
         total_pedestrian = 72
         dir711_count = 24
