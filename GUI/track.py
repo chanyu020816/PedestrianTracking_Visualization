@@ -2,65 +2,26 @@ import os
 import cv2
 import hashlib
 import colorsys
+import time
 import numpy as np
 
-from ultralytics import YOLO, RTDETR
-# from ultralytics_local import YOLO, RTDETR
+# from ultralytics import YOLO, RTDETR, YOLO
+from ultralytics_local import YOLO, RTDETR
+from ultralytics import YOLO
+from utils.track_utils import *
 
 # Load the YOLOv8 model
-# model = YOLO("../ObjectDetectionModel/final_models/yolov8l/weights/best.pt")
+model = YOLO("../ObjectDetectionModel/final_models/yolov8m-nms-free/weights/best.pt")
 # model = RTDETR("../ObjectDetectionModel/final_models/yolov8n-rt-detr/weights/best.pt")
-model = YOLO("./pretrained_models/yolov8n.pt")
+# model = YOLO("./pretrained_models/yolov8n.pt")
 # model = RTDETR("./pretrained_models/rtdetr-l.pt")
 print(model.info())
 
 # Open the video file
 video_path = "./testing.mp4"
+video_path = "../RealData/tku1080p.MOV"
 video_out_path = "./output.mp4"
 cap = cv2.VideoCapture(video_path)
-
-def get_direction(start, end):
-    """
-    :param start: (x, y)
-    :param end: (x, y)
-    :return:
-    """
-    (x_start, y_start), (x_end, y_end) = start, end
-    direction = [(x_start < x_end), (y_start < y_end)]
-    if x_start < 0 or y_start < 0:
-        return -1
-    if direction[0] and direction[1]:
-        return 0
-    elif not direction[0] and direction[1]:
-        return 1
-    elif direction[0] and not direction[1]:
-        return 3
-    else:
-        return 2
-
-def id_to_color(id: int, saturation: float = 0.75, value: float = 0.95) -> tuple:
-
-    # Hash the ID to get a consistent unique value
-    hash_object = hashlib.sha256(str(id).encode())
-    hash_digest = hash_object.hexdigest()
-
-    # Convert the first few characters of the hash to an integer
-    # and map it to a value between 0 and 1 for the hue
-    hue = int(hash_digest[:8], 16) / 0xffffffff
-
-    # Convert HSV to RGB
-    rgb = colorsys.hsv_to_rgb(hue, saturation, value)
-
-    # Convert RGB from 0-1 range to 0-255 range and format as hexadecimal
-    rgb_255 = tuple(int(component * 255) for component in rgb)
-    hex_color = '#%02x%02x%02x' % rgb_255
-    # Strip the '#' character and convert the string to RGB integers
-    rgb = tuple(int(hex_color.strip('#')[i:i + 2], 16) for i in (0, 2, 4))
-
-    # Convert RGB to BGR for OpenCV
-    bgr = rgb[::-1]
-
-    return bgr
 
 track_history = dict()
 direction_history = dict()
@@ -71,11 +32,12 @@ cap_out = cv2.VideoWriter(
     video_out_path,
     cv2.VideoWriter_fourcc(*'mp4v'),
     cap.get(cv2.CAP_PROP_FPS),
-    (960, 54*10)
+    (960, 540)
 )
 
 frame_count = 0
 
+prev_time = time.time()
 # Loop through the video frames
 while cap.isOpened():
 
@@ -84,15 +46,24 @@ while cap.isOpened():
     activate_id = []
     directions = [0 for _ in range(5)]
     if success:
+        current_time = time.time()
+        time_interval = (current_time - prev_time)
+        prev_time = current_time
 
+        if frame_count % 1 != 0:
+            frame_count += 1
+            prev_time = current_time
+            continue
+
+        print(int(1 / time_interval))
         # Run YOLOv8 tracking on the frame, persisting tracks between frames
         results = model.track(
             frame,
-            persist = True,
-            device = "mps",
-            verbose = False,
-            classes = [0],
-            tracker = "./tracker_config.yaml"
+            persist=True,
+            # device="mps",
+            verbose=True,
+            classes=[0],
+            tracker="./tracker_config.yaml"
         )
 
         # print(results)
@@ -109,7 +80,7 @@ while cap.isOpened():
             id, x, y = obj[0], obj[1], obj[2]
             if id in track_history.keys():
                 track_history[id].append((x, y))
-                dire = get_direction(track_history[id][0], track_history[id][1])
+                dire = get_four_direction(track_history[id][0], track_history[id][1])[0]
                 if dire != -1:
                     direction_history[id] = dire
                 else:
@@ -145,8 +116,9 @@ while cap.isOpened():
             text = f'Dire1: {directions[0]} Dire2: {directions[1]} Dire3: {directions[2]}, Dire4: {directions[3]}'
         cv2.putText(annotated_frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
         # Display the annotated frame
-        cv2.imshow("YOLOv8 Tracking", annotated_frame)
-        cap_out.write(annotated_frame)
+
+        cv2.imshow("Tracking", annotated_frame)
+        # cap_out.write(annotated_frame)
 
         frame_count += 1
         # Break the loop if 'q' is pressed

@@ -3,24 +3,39 @@ import numpy as np
 import hashlib
 import colorsys
 
-def get_direction(start, end):
+def get_four_direction(start, end):
     """
     :param start: (x, y)
     :param end: (x, y)
     :return: direction
     """
     (x_start, y_start), (x_end, y_end) = start, end
-    direction = [(x_start < x_end), (y_start < y_end)]
+    direction = [(x_start <= x_end), (y_start <= y_end)]
+
     if x_start < 0 or y_start < 0:
-        return -1
+        dire = -1
     if direction[0] and direction[1]:
-        return 0
+        dire = 0
     elif not direction[0] and direction[1]:
-        return 1
+        dire = 1
     elif direction[0] and not direction[1]:
-        return 3
+        dire = 3
     else:
-        return 2
+        dire = 2
+    return [direction, dire]
+
+def get_horizon_direction(start, end) -> str:
+    return "right" if start[0] <= end[0] else "left"
+
+def get_vertical_direction(start, end) -> str:
+    return "top" if start[1] <= end[1] else "down"
+
+def get_eight_direction(start, end) -> int:
+    quan = get_four_direction(start, end)
+    slope = abs((start[1] - end[1]) / (start[0] - end[0] + 1e-7))
+    dire = (1 + 2 * quan[1]) + ((quan[0][0] ^ quan[0][1]) ^ (slope >= 1))
+
+    return dire % 8
 
 def id_to_color(id: int, saturation: float = 0.75, value: float = 0.95) -> tuple:
 
@@ -45,3 +60,6 @@ def id_to_color(id: int, saturation: float = 0.75, value: float = 0.95) -> tuple
     bgr = rgb[::-1]
 
     return bgr
+
+if __name__ == '__main__':
+    print(get_eight_direction((20, 20), (30, 20)))

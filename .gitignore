@@ -24,3 +24,6 @@ GUI/yolo_trackin
 *.csv
 *.0
 *.ipynb
+GUI/ultralytics_local
+GUI/ultralytics
+ObjectDetectionModel/final_models/
