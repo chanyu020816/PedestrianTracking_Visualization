@@ -16,7 +16,8 @@ from numpy import array
 from utils.VideoTracking import *
 from utils.track_utils import *
 
-model = YOLO("yolov8n.pt")
+model_name = "yolov8m-nms-free"
+model = YOLO(f"../ObjectDetectionModel/final_models/{model_name}/weights/best.pt")
 
 class PedestrianTrackingPage(tk.Frame):
     def __init__(self, parent, controller):

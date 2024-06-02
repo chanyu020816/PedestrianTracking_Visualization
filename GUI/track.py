@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 # from ultralytics import YOLO, RTDETR, YOLO
-from ultralytics_local import YOLO, RTDETR
+# from ultralytics_local import YOLO, RTDETR
 from ultralytics import YOLO
 from utils.track_utils import *
 
@@ -166,7 +166,7 @@ while cap.isOpened():
         miss_track = {k: v for k, v in miss_track.items() if v <= record_thresh}
 
         # add direction count and FPS every second (30 frames)
-        """
+
         if frame_count % 30 == 0:
             text = (f'{directions_class[0]}: {directions[0]}, '
                     f'{directions_class[1]}: {directions[1]}, '
@@ -174,7 +174,6 @@ while cap.isOpened():
                     f'{directions_class[3]}: {directions[3]}, '
                     f'Fps: {int(1 / time_interval):3d}')
         cv2.putText(annotated_frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
-        """
 
         if draw_grid:
             cv2.line(annotated_frame, (0, 200), (width, 200), (0, 255, 255), 2)
@@ -202,4 +201,5 @@ while cap.isOpened():
 cap.release()
 cap_out.release()
 cv2.destroyAllWindows()
+print(frame_count)
 # sudo apt install protobuf-compiler libprotoc-dev
