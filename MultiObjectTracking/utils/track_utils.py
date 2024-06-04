@@ -42,9 +42,9 @@ def get_vertical_direction(start, end) -> str:
     return int(start[1] <= end[1])
 
 def get_eight_direction(start, end) -> int:
-    quan = get_four_direction(start, end)
+    quad = get_four_direction(start, end)
     slope = abs((start[1] - end[1]) / (start[0] - end[0] + 1e-7))
-    dire = (1 + 2 * quan[1]) + ((quan[0][0] ^ quan[0][1]) ^ (slope >= 1))
+    dire = (1 + 2 * quad[1]) + ((quad[0][0] ^ quad[0][1]) ^ (slope >= 1))
 
     return dire % 8
 

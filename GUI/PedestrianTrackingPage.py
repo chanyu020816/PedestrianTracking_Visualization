@@ -16,7 +16,7 @@ from numpy import array
 from utils.VideoTracking import *
 from utils.track_utils import *
 
-model_name = "yolov8m-nms-free"
+model_name = "yolov8m"
 model = YOLO(f"../ObjectDetectionModel/final_models/{model_name}/weights/best.pt")
 
 class PedestrianTrackingPage(tk.Frame):
@@ -126,7 +126,6 @@ class PedestrianTrackingPage(tk.Frame):
                         persist=True,
                         device="mps",
                         verbose=False,
-                        classes=[0],
                         tracker="./tracker_config.yaml"
                     )
 
@@ -192,7 +191,7 @@ class PedestrianTrackingPage(tk.Frame):
 
                 frame_count += 1
 
-            print(frame_count)
+
             self.cap.release()
             self.cap = None
             self.canvas.image = None

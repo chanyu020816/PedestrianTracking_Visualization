@@ -79,7 +79,7 @@ while cap.isOpened():
         prev_time = current_time
 
         # frame extraction
-        """        
+        """     directions[dire]
         if frame_count % 1 != 0:
             frame_count += 1
             prev_time = current_time

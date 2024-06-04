@@ -139,9 +139,7 @@ while cap.isOpened():
             for track in track_history[id]:
                 if track[0] != -1:
                     cv2.circle(annotated_frame, track, 5, directions_colors[direction_history[id]], -1)
-                    # cv2.circle(annotated_frame, (x, y), 3, (0, 255, 0), -1)
                     # update previous position
-                    # print(f'{id}: {len(track_history[id])}')
                     last_coord = track
 
             # add direction type for each track id
