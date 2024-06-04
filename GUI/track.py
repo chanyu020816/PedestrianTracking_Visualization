@@ -1,8 +1,9 @@
-import os
-import cv2
-import hashlib
 import colorsys
+import hashlib
+import os
 import time
+
+import cv2
 import numpy as np
 
 # from ultralytics import YOLO, RTDETR, YOLO
@@ -17,11 +18,11 @@ distance_thresh = 0.5
 record_thresh = 30
 
 directions_class = [
-    "InBusinessDepartment", # red
-    "OutBusinessDepartment", # green
-    "InSchool", # blue
-    "OutSchool", # magenta
-    "Undefined" # white
+    "InBusinessDepartment",  # red
+    "OutBusinessDepartment",  # green
+    "InSchool",  # blue
+    "OutSchool",  # magenta
+    "Undefined",  # white
 ]
 
 directions_colors = [
@@ -29,7 +30,7 @@ directions_colors = [
     (0, 255, 0),
     (0, 0, 255),
     (255, 0, 255),
-    (255, 255, 255)
+    (255, 255, 255),
 ]
 
 # Load the YOLOv8 model
@@ -53,10 +54,7 @@ id_dire = dict()
 size = (width, height)
 # Read a frame from the video
 cap_out = cv2.VideoWriter(
-    video_out_path,
-    cv2.VideoWriter_fourcc(*'mp4v'),
-    cap.get(cv2.CAP_PROP_FPS),
-    size
+    video_out_path, cv2.VideoWriter_fourcc(*"mp4v"), cap.get(cv2.CAP_PROP_FPS), size
 )
 
 frame_count = 0
@@ -71,16 +69,15 @@ while cap.isOpened():
     directions = [0 for _ in range(5)]
     if success:
         current_time = time.time()
-        time_interval = (current_time - prev_time)
+        time_interval = current_time - prev_time
         prev_time = current_time
 
         # frame extraction
-        """        
-        if frame_count % 1 != 0:
+
+        if frame_count % 2 == 0:
             frame_count += 1
             prev_time = current_time
             continue
-        """
 
         # Run YOLOv8 tracking on the frame, persisting tracks between frames
         results = model.track(
@@ -91,12 +88,12 @@ while cap.isOpened():
             classes=[0],
             tracker="./tracker_config.yaml",
             conf=0.2,
-            iou=0.8
+            iou=0.8,
         )
 
         # Visualize the results on the frame
         results = results[0]
-        annotated_frame = frame # or results.plot() with bboxes
+        annotated_frame = frame  # or results.plot() with bboxes
 
         center = results.boxes.xywh.cpu().numpy().astype(int)
         ids = results.boxes.id.cpu().numpy().astype(int)
@@ -107,15 +104,20 @@ while cap.isOpened():
             id, x, y = obj[0], obj[1], obj[2]
 
             # region ignored
-            if y <= 200: continue
-            if y >= 400 and x >= 800: continue
+            if y <= 200:
+                continue
+            if y >= 400 and x >= 800:
+                continue
 
             # if already recorded
             if id in track_history.keys():
                 track_history[id].append((x, y))
                 #
                 # dire = get_four_direction(track_history[id][0], track_history[id][1])[1]
-                start_pos = next((value for value in track_history.get(id, []) if value != (-1, -1)), None)
+                start_pos = next(
+                    (value for value in track_history.get(id, []) if value != (-1, -1)),
+                    None,
+                )
                 dire = get_school_direction(start_pos, (x, y))
                 if dire != -1 and direction_history[id] != dire:
                     # if the direction is detected and different to past -> update the direction
@@ -138,7 +140,13 @@ while cap.isOpened():
         for id in track_history.keys():
             for track in track_history[id]:
                 if track[0] != -1:
-                    cv2.circle(annotated_frame, track, 5, directions_colors[direction_history[id]], -1)
+                    cv2.circle(
+                        annotated_frame,
+                        track,
+                        5,
+                        directions_colors[direction_history[id]],
+                        -1,
+                    )
                     # update previous position
                     last_coord = track
 
@@ -156,7 +164,7 @@ while cap.isOpened():
             if id not in activate_id:
                 track_history[id].append((-1, -1))
             # only plot the last 20 frame of a track
-            if len(track_history[id]) >= record_thresh :
+            if len(track_history[id]) >= record_thresh:
                 track_history[id].pop(0)
 
         # it a track keep missing for more than 20 times, delete it
@@ -166,12 +174,22 @@ while cap.isOpened():
         # add direction count and FPS every second (30 frames)
 
         if frame_count % 30 == 0:
-            text = (f'{directions_class[0]}: {directions[0]}, '
-                    f'{directions_class[1]}: {directions[1]}, '
-                    f'{directions_class[2]}: {directions[2]}, '
-                    f'{directions_class[3]}: {directions[3]}, '
-                    f'Fps: {int(1 / time_interval):3d}')
-        cv2.putText(annotated_frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+            text = (
+                f"{directions_class[0]}: {directions[0]}, "
+                f"{directions_class[1]}: {directions[1]}, "
+                f"{directions_class[2]}: {directions[2]}, "
+                f"{directions_class[3]}: {directions[3]}, "
+                f"Fps: {int(1 / time_interval):3d}"
+            )
+            cv2.putText(
+                annotated_frame,
+                text,
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.75,
+                (0, 0, 255),
+                2,
+            )
 
         if draw_grid:
             cv2.line(annotated_frame, (0, 200), (width, 200), (0, 255, 255), 2)
