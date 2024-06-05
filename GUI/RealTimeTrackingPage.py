@@ -37,6 +37,17 @@ class RealTimeTrackingPage(tk.Frame):
         self.cap = None
         self.video_cfg = None
 
+        self.display_background()
+        self.create_realtime_tracking_page()
+
+
+    def create_realtime_tracking_page(self):
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        self.canvas.place(x=40, y=80)
+
+    def display_background(self):
         background = tk.Canvas(
             self,
             bg="#FFFFFF",
@@ -77,15 +88,6 @@ class RealTimeTrackingPage(tk.Frame):
             fg="#4f4e4d",
         )
         self.summary_title.place(x=1490, y=25)
-        self.create_realtime_tracking_page()
-
-        self.display_summary()
-
-    def create_realtime_tracking_page(self):
-        style = ttk.Style()
-        style.theme_use("clam")
-
-        self.canvas.place(x=40, y=80)
 
     def upload_video(self):
         video_path = filedialog.askopenfilename(
@@ -95,7 +97,6 @@ class RealTimeTrackingPage(tk.Frame):
             self.cap = cv2.VideoCapture(video_path)
             fourcc, size, fps = get_video_cfg(video_path)
             self.video_cfg = (fourcc, size, fps)
-            self.show_video(True)
 
     def close_page(self):
         pass
@@ -226,51 +227,3 @@ class RealTimeTrackingPage(tk.Frame):
             self.cap = None
             self.canvas.image = None
             self.canvas.place(x=40, y=80)
-
-    def display_summary(self):
-        total_pedestrian = 72
-        dir711_count = 24
-        bus_stop_count = 32
-        school_count = 16
-        fps = 15
-        pedestrian_count_title = tk.Label(
-            self,
-            text=f"Total Pedestrian:{total_pedestrian:>11}",
-            font=("Canva Sans", 30, "bold"),
-            bg="#FFFFFF",
-            fg="#4471e3",
-        )
-        pedestrian_count_title.place(x=1390, y=85)
-        dir711_count_title = tk.Label(
-            self,
-            text=f"Direction 711:{dir711_count:>22}",
-            font=("Canva Sans", 28, "bold"),
-            bg="#FFFFFF",
-            fg="#4471e3",
-        )
-        dir711_count_title.place(x=1390, y=125)
-        bus_stop_count_title = tk.Label(
-            self,
-            text=f"Direction Bus Stop:{bus_stop_count:>10}",
-            font=("Canva Sans", 28, "bold"),
-            bg="#FFFFFF",
-            fg="#4471e3",
-        )
-        bus_stop_count_title.place(x=1390, y=165)
-        school_count_title = tk.Label(
-            self,
-            text=f"Direction School:{school_count:15}",
-            font=("Canva Sans", 28, "bold"),
-            bg="#FFFFFF",
-            fg="#4471e3",
-        )
-        school_count_title.place(x=1390, y=205)
-
-        fps_title = tk.Label(
-            self,
-            text=f"FPS: {fps}",
-            font=("Canva Sans", 20, "bold"),
-            bg="#FFFFFF",
-            fg="#4f4e4d",
-        )
-        fps_title.place(x=1520, y=715)

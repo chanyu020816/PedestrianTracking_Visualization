@@ -1,3 +1,4 @@
+from cv2 import VideoCapture
 from ultralytics import YOLO
 
 HEIGHT = 850
@@ -24,5 +25,5 @@ DIRECTIONS_COLORS = [
     (255, 255, 255),
 ]
 AREAS_IGNORED = []
-
+# CAMERA = VideoCapture(0)
 model = YOLO(f"../ObjectDetectionModel/final_models/{MODEL_NAME}/weights/best.pt")

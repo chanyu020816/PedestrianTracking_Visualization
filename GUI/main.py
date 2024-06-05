@@ -23,6 +23,14 @@ class MainView(tk.Tk):
     def start(self):
         self.pages["PedestrianTrackingPage"].grid(row=0, column=0, sticky="nsew")
 
+    def show_pedestrian_tracking_page(self):
+        self.pages["RealTimeTrackingPage"].grid_forget()
+        self.pages["PedestrianTrackingPage"].grid(row=0, column=0, sticky="nsew")
+
+    def show_rt_tracking_page(self):
+        self.pages["PedestrianTrackingPage"].grid_forget()
+        self.pages["RealTimeTrackingPage"].grid(row=0, column=0, sticky="nsew")
+
 
 if __name__ == "__main__":
     app = MainView()

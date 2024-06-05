@@ -12,10 +12,10 @@ from ultralytics import YOLO
 from utils.track_utils import *
 
 model_name = "yolov8m"
-draw_grid = False
+draw_grid = True
 reso = 720
 distance_thresh = 0.5
-record_thresh = 30
+record_thresh = 20
 
 directions_class = [
     "InBusinessDepartment",  # red

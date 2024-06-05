@@ -35,6 +35,31 @@ class PedestrianTrackingPage(tk.Frame):
         self.cap = None
         self.video_cfg = None
 
+        self.summary_title = tk.Label(
+            self,
+            text="Summary",
+            font=("Canva Sans", 35, "bold"),
+            bg="#FFFFFF",
+            fg="#4f4e4d",
+        )
+        self.summary_title.place(x=1490, y=25)
+        self.inbusiness_label = None
+        self.outbusiness_label = None
+        self.inschool_label = None
+        self.outschool_label = None
+        self.total_label = None
+        self.fps_label = None
+
+        self.display_background()
+        self.create_pedestrian_tracking_page()
+
+    def create_pedestrian_tracking_page(self):
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        self.canvas.place(x=40, y=80)
+
+    def display_background(self):
         background = tk.Canvas(
             self,
             bg="#FFFFFF",
@@ -88,29 +113,26 @@ class PedestrianTrackingPage(tk.Frame):
         )
         upload_button.place(x=1405, y=750)
 
-        self.summary_title = tk.Label(
+        to_rt_tracking_page_button = Button(
             self,
-            text="Summary",
-            font=("Canva Sans", 35, "bold"),
-            bg="#FFFFFF",
-            fg="#4f4e4d",
+            text="Tracking",
+            command=self.to_rt_tracking_page,
+            padx=10,
+            pady=8,
+            bg="#3f97df",
+            bd=0,
+            font=("Open Sans", 23, "bold"),
+            activebackground="#032f54",
+            activeforeground="white",
+            highlightthickness=0,
+            borderwidth=0,
+            highlightcolor="#FFF3F3",
+            fg="white",
+            highlightbackground="#FFF3F3",
+            width=250,
+            height=45,
         )
-        self.summary_title.place(x=1490, y=25)
-        self.create_pedestrian_tracking_page()
-
-        self.inbusiness_label = None
-        self.outbusiness_label = None
-        self.inschool_label = None
-        self.outschool_label = None
-        self.total_label = None
-        self.fps_label = None
-        # self.display_summary()
-
-    def create_pedestrian_tracking_page(self):
-        style = ttk.Style()
-        style.theme_use("clam")
-
-        self.canvas.place(x=40, y=80)
+        to_rt_tracking_page_button.place(x=1135, y=25)
 
     def upload_video(self):
         video_path = filedialog.askopenfilename(
@@ -120,7 +142,7 @@ class PedestrianTrackingPage(tk.Frame):
             self.cap = cv2.VideoCapture(video_path)
             fourcc, size, fps = get_video_cfg(video_path)
             self.video_cfg = (fourcc, size, fps)
-            self.show_video(True)
+            self.show_video(detect=False, track=True)
 
     def close_page(self):
         pass
@@ -258,13 +280,16 @@ class PedestrianTrackingPage(tk.Frame):
 
                         img = Image.fromarray(annotated_frame)
                         img = img.resize((video_width, video_height), Image.ANTIALIAS)
+                else:
+                    img = Image.fromarray(frame)
+                    img = img.resize((video_width, video_height), Image.ANTIALIAS)
 
                 photo = ImageTk.PhotoImage(image=img)
                 self.canvas.create_image(0, 0, anchor="nw", image=photo)
                 self.canvas.image = photo
 
                 if frame_count % 30 == 0:
-                    t = time() - start_time
+                    # t = time() - start_time
                     # fps = 30 / FRAME_INTERVAL / t # compute avg fps
                     self.update_summary(directions)
                     # start_time = time() # update start time
@@ -273,15 +298,11 @@ class PedestrianTrackingPage(tk.Frame):
                 ret, frame = self.cap.read()
 
                 frame_count += 1
-            self.cap.release()
-            self.cap = None
-            self.canvas.image = None
-            self.clean_summary()
+            self.stop_video()
             self.canvas.place(x=40, y=80)
 
     def update_summary(self, directions, fps=30):
-        if self.inbusiness_label is not None:
-            self.clean_summary()
+        self.clean_summary()
         self.inbusiness_label = tk.Label(
             self,
             text=f"{DIRECTIONS[0]}: {directions[0]:3d}",
@@ -344,3 +365,14 @@ class PedestrianTrackingPage(tk.Frame):
             self.outschool_label.place_forget()
             self.total_label.place_forget()
             self.fps_label.place_forget()
+
+    def to_rt_tracking_page(self):
+        print("to_rt_tracking_page")
+        self.stop_video()
+
+    def stop_video(self):
+        if self.cap is not None:
+            self.cap.release()
+            self.cap = None
+            self.canvas.image = None
+            self.clean_summary()
