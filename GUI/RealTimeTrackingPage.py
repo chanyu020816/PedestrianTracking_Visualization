@@ -40,7 +40,6 @@ class RealTimeTrackingPage(tk.Frame):
         self.display_background()
         self.create_realtime_tracking_page()
 
-
     def create_realtime_tracking_page(self):
         style = ttk.Style()
         style.theme_use("clam")

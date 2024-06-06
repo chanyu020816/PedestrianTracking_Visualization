@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def draw_bounding_boxes(image_path, label_path, output_path=None):
     # Read image
     image = cv2.imread(image_path)
@@ -9,7 +10,7 @@ def draw_bounding_boxes(image_path, label_path, output_path=None):
         return
 
     # Read YOLO format label
-    with open(label_path, 'r') as label_file:
+    with open(label_path, "r") as label_file:
         lines = label_file.readlines()
 
     # Draw bounding boxes on the image
@@ -17,7 +18,7 @@ def draw_bounding_boxes(image_path, label_path, output_path=None):
         elements = line.strip().split()
         class_id = int(elements[0])
         x_center, y_center, width, height = map(float, elements[1:])
-        
+
         # Convert YOLO format to OpenCV format
         h, w, _ = image.shape
         x1 = int((x_center - width / 2) * w)
@@ -45,6 +46,7 @@ def draw_bounding_boxes(image_path, label_path, output_path=None):
         cv2.imshow("Result", image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     image_path = "./FullData/images/000000000086.jpg"

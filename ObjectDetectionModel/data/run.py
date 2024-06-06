@@ -1,3 +1,3 @@
 from utils.workflow import run_pipeline
 
-run_pipeline('./constants.yaml')
+run_pipeline("./constants.yaml")

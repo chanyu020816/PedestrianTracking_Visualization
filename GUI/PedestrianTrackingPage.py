@@ -49,6 +49,12 @@ class PedestrianTrackingPage(tk.Frame):
         self.outschool_label = None
         self.total_label = None
         self.fps_label = None
+        self.inbusiness_label_num = None
+        self.outbusiness_label_num = None
+        self.inschool_label_num = None
+        self.outschool_label_num = None
+        self.total_label_num = None
+        self.fps_label_num = None
 
         self.display_background()
         self.create_pedestrian_tracking_page()
@@ -142,10 +148,7 @@ class PedestrianTrackingPage(tk.Frame):
             self.cap = cv2.VideoCapture(video_path)
             fourcc, size, fps = get_video_cfg(video_path)
             self.video_cfg = (fourcc, size, fps)
-            self.show_video(detect=False, track=True)
-
-    def close_page(self):
-        pass
+            self.show_video(detect=True, track=True)
 
     def show_video(self, detect=False, track=True):
         track_history = dict()
@@ -154,6 +157,7 @@ class PedestrianTrackingPage(tk.Frame):
 
         if self.cap is not None:
             ret, frame = self.cap.read()
+            self.init_summary()
             video_width = 1340
             video_height = 730
             frame_count = 0
@@ -301,11 +305,10 @@ class PedestrianTrackingPage(tk.Frame):
             self.stop_video()
             self.canvas.place(x=40, y=80)
 
-    def update_summary(self, directions, fps=30):
-        self.clean_summary()
+    def init_summary(self):
         self.inbusiness_label = tk.Label(
             self,
-            text=f"{DIRECTIONS[0]}: {directions[0]:3d}",
+            text=f"{DIRECTIONS[0]}:",
             font=("Canva Sans", 25, "bold"),
             bg="#FFFFFF",
             fg="#4471e3",
@@ -314,7 +317,7 @@ class PedestrianTrackingPage(tk.Frame):
 
         self.outbusiness_label = tk.Label(
             self,
-            text=f"{DIRECTIONS[1]}: {directions[1]:3d}",
+            text=f"{DIRECTIONS[1]}:",
             font=("Canva Sans", 25, "bold"),
             bg="#FFFFFF",
             fg="#4471e3",
@@ -323,7 +326,7 @@ class PedestrianTrackingPage(tk.Frame):
 
         self.inschool_label = tk.Label(
             self,
-            text=f"{DIRECTIONS[2]}: {directions[2]:3d}",
+            text=f"{DIRECTIONS[2]}:",
             font=("Canva Sans", 25, "bold"),
             bg="#FFFFFF",
             fg="#4471e3",
@@ -332,7 +335,7 @@ class PedestrianTrackingPage(tk.Frame):
 
         self.outschool_label = tk.Label(
             self,
-            text=f"{DIRECTIONS[3]}: {directions[3]:3d}",
+            text=f"{DIRECTIONS[3]}:",
             font=("Canva Sans", 25, "bold"),
             bg="#FFFFFF",
             fg="#4471e3",
@@ -340,7 +343,7 @@ class PedestrianTrackingPage(tk.Frame):
         self.outschool_label.place(x=1390, y=205)
         self.total_label = tk.Label(
             self,
-            text=f"Total Pedestrian: {np.sum(directions[:4]):3d}",
+            text=f"Total Pedestrian:",
             font=("Canva Sans", 25, "bold"),
             bg="#FFFFFF",
             fg="#4471e3",
@@ -350,12 +353,76 @@ class PedestrianTrackingPage(tk.Frame):
 
         self.fps_label = tk.Label(
             self,
-            text=f"FPS: {int(fps)}",
+            text=f"FPS:",
             font=("Canva Sans", 20, "bold"),
             bg="#FFFFFF",
             fg="#4f4e4d",
         )
         self.fps_label.place(x=1515, y=715)
+
+    def update_summary(self, directions, fps=30):
+        if self.inbusiness_label_num is not None:
+            self.inbusiness_label_num.place_forget()
+            self.outbusiness_label_num.place_forget()
+            self.inschool_label_num.place_forget()
+            self.outschool_label_num.place_forget()
+            self.total_label_num.place_forget()
+            self.fps_label_num.place_forget()
+
+        self.inbusiness_label_num = tk.Label(
+            self,
+            text=f"{directions[0]}",
+            font=("Canva Sans", 25, "bold"),
+            bg="#FFFFFF",
+            fg="#4471e3",
+        )
+        self.inbusiness_label_num.place(x=1615, y=85)
+
+        self.outbusiness_label_num = tk.Label(
+            self,
+            text=f"{directions[1]}",
+            font=("Canva Sans", 25, "bold"),
+            bg="#FFFFFF",
+            fg="#4471e3",
+        )
+        self.outbusiness_label_num.place(x=1635, y=125)
+
+        self.inschool_label_num = tk.Label(
+            self,
+            text=f"{directions[2]}",
+            font=("Canva Sans", 25, "bold"),
+            bg="#FFFFFF",
+            fg="#4471e3",
+        )
+        self.inschool_label_num.place(x=1510, y=165)
+
+        self.outschool_label_num = tk.Label(
+            self,
+            text=f"{directions[3]}",
+            font=("Canva Sans", 25, "bold"),
+            bg="#FFFFFF",
+            fg="#4471e3",
+        )
+        self.outschool_label_num.place(x=1530, y=205)
+
+        self.total_label_num = tk.Label(
+            self,
+            text=f"{np.sum(directions[:4])}",
+            font=("Canva Sans", 25, "bold"),
+            bg="#FFFFFF",
+            fg="#4471e3",
+        )
+
+        self.total_label_num.place(x=1595, y=245)
+
+        self.fps_label_num = tk.Label(
+            self,
+            text=f"{int(fps)}",
+            font=("Canva Sans", 20, "bold"),
+            bg="#FFFFFF",
+            fg="#4f4e4d",
+        )
+        self.fps_label_num.place(x=1560, y=715)
 
     def clean_summary(self):
         if self.inbusiness_label is not None:
@@ -365,6 +432,12 @@ class PedestrianTrackingPage(tk.Frame):
             self.outschool_label.place_forget()
             self.total_label.place_forget()
             self.fps_label.place_forget()
+            self.inbusiness_label_num.place_forget()
+            self.outbusiness_label_num.place_forget()
+            self.inschool_label_num.place_forget()
+            self.outschool_label_num.place_forget()
+            self.total_label_num.place_forget()
+            self.fps_label_num.place_forget()
 
     def to_rt_tracking_page(self):
         print("to_rt_tracking_page")

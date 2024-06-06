@@ -139,16 +139,17 @@ while cap.isOpened():
 
         for id in track_history.keys():
             for track in track_history[id]:
-                if track[0] != -1:
-                    cv2.circle(
-                        annotated_frame,
-                        track,
-                        5,
-                        directions_colors[direction_history[id]],
-                        -1,
-                    )
-                    # update previous position
-                    last_coord = track
+                if track[0] == -1:
+                    continue
+                cv2.circle(
+                    annotated_frame,
+                    track,
+                    5,
+                    directions_colors[direction_history[id]],
+                    -1,
+                )
+                # update previous position
+                last_coord = track
 
             # add direction type for each track id
             """
