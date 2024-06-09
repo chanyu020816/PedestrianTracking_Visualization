@@ -142,6 +142,7 @@ class PedestrianTrackingPage(tk.Frame):
         to_rt_tracking_page_button.place(x=1405, y=670)
 
     def upload_video(self):
+        self.stop_camera_frame()
         video_path = filedialog.askopenfilename(
             filetypes=[("MOV Files", "*.mov"), ("MP4 Files", "*.mp4")]
         )
@@ -157,7 +158,13 @@ class PedestrianTrackingPage(tk.Frame):
         miss_track = dict()
         video_width = VIDEO_WIDTH
         video_height = VIDEO_HEIGHT
-
+        with open("log.txt", "w") as f:
+            f.write("")
+        if CSV_RECORD:
+            with open("log.csv", "w") as f:
+                f.write(
+                    f"frame,{DIRECTIONS[0]},{DIRECTIONS[1]},{DIRECTIONS[2]},{DIRECTIONS[3]}\n"
+                )
         if self.cap is not None:
             ret, frame = self.cap.read()
             self.init_summary()
@@ -167,7 +174,7 @@ class PedestrianTrackingPage(tk.Frame):
             while ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 activate_id = []
-                directions = [0 for _ in range(5)]
+                directions = [0, 0, 0, 0, 0]
                 # print(frame_count)
                 if FRAME_EXTRACT:
                     if frame_count % FRAME_INTERVAL != 0:
@@ -180,7 +187,7 @@ class PedestrianTrackingPage(tk.Frame):
                         img = self.detection(frame)
                     else:
                         start_time = time()
-                        results = model.track(
+                        results = MODEL.track(
                             frame,
                             persist=True,
                             device="mps",
@@ -257,9 +264,45 @@ class PedestrianTrackingPage(tk.Frame):
 
                         # it a track keep missing for more than 20 times, delete it
                         miss_track = {k: v + 1 for k, v in miss_track.items()}
-                        miss_track = {
-                            k: v for k, v in miss_track.items() if v <= RECORD_THRESHOLD
-                        }
+
+                        if frame_count % 30 == 0:
+                            deactivate_id = [
+                                k for k, v in miss_track.items() if v > RECORD_THRESHOLD
+                            ]
+                            miss_track = {
+                                k: v
+                                for k, v in miss_track.items()
+                                if v <= RECORD_THRESHOLD
+                            }
+                            track_history = {
+                                k: v
+                                for k, v in track_history.items()
+                                if k not in deactivate_id
+                            }
+                            direction_history = {
+                                k: v
+                                for k, v in direction_history.items()
+                                if k not in deactivate_id
+                            }
+                            self.update_summary(directions)
+
+                            with open("log.txt", "a") as f:
+                                directions_class = DIRECTIONS
+                                text = (
+                                    f"frame {frame_count:3d} - ["
+                                    f"{directions_class[0]}: {directions[0]:3}, "
+                                    f"{directions_class[1]}: {directions[1]:3d}, "
+                                    f"{directions_class[2]}: {directions[2]:3d}, "
+                                    f"{directions_class[3]}: {directions[3]:3d}]\n"
+                                )
+                                f.write(text)
+
+                        if CSV_RECORD:
+                            # save to csv file
+                            with open("log.csv", "a") as f:
+                                directions_class = DIRECTIONS
+                                text = f"{frame_count},{directions[0]},{directions[1]},{directions[2]},{directions[3]}\n"
+                                f.write(text)
 
                         img = Image.fromarray(annotated_frame)
                         img = img.resize((video_width, video_height), Image.ANTIALIAS)
@@ -270,12 +313,6 @@ class PedestrianTrackingPage(tk.Frame):
                 photo = ImageTk.PhotoImage(image=img)
                 self.canvas.create_image(0, 0, anchor="nw", image=photo)
                 # self.canvas.image = photo
-
-                if frame_count % 30 == 0:
-                    # t = time() - start_time
-                    # fps = 30 / FRAME_INTERVAL / t # compute avg fps
-                    self.update_summary(directions)
-                    # start_time = time() # update start time
 
                 self.window.update_idletasks()  # Update the GUI
                 ret, frame = self.cap.read()
@@ -337,7 +374,7 @@ class PedestrianTrackingPage(tk.Frame):
             bg="#FFFFFF",
             fg="#4f4e4d",
         )
-        self.fps_label.place(x=1515, y=715)
+        # self.fps_label.place(x=1515, y=715)
 
     def update_summary(self, directions, fps=30):
         if self.inbusiness_label_num is not None:
@@ -419,11 +456,8 @@ class PedestrianTrackingPage(tk.Frame):
             self.fps_label_num.place_forget()
 
     def to_rt_tracking_page(self):
-        print("to_rt_tracking_page")
         self.stop_video()
-        # self.controller.show_rt_tracking_page()
-        self.running_camera_frame = True
-        self.show_camera_frame()
+        self.controller.show_rt_tracking_page()
 
     def stop_video(self):
         if self.cap is not None:
@@ -433,11 +467,9 @@ class PedestrianTrackingPage(tk.Frame):
             self.clean_summary()
 
     def start_camera_frame(self):
-        print("Start camera")
         self.stop_video()
         self.running_camera_frame = True
         self.show_camera_frame()
-
 
     def show_camera_frame(self):
         if not self.running_camera_frame:
@@ -446,7 +478,6 @@ class PedestrianTrackingPage(tk.Frame):
         ret, frame = CAMERA.read()
 
         if ret:
-            print("show_camera_frame")
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(frame)
             img = img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.ANTIALIAS)
@@ -458,13 +489,10 @@ class PedestrianTrackingPage(tk.Frame):
 
     def stop_camera_frame(self):
         self.running_camera_frame = False
-        self.canvas.place_forget()
 
     @staticmethod
     def detection(frame):
-        results = model(
-            frame, verbose=False, stream=True, device="mps", classes=[0]
-        )
+        results = MODEL(frame, verbose=False, stream=True, device="mps", classes=[0])
         for r in results:
             boxes = r.boxes
             for box in boxes:
@@ -478,7 +506,5 @@ class PedestrianTrackingPage(tk.Frame):
                     thickness=2,
                 )
         img = Image.fromarray(img_t)
-        img = img.resize(
-            (VIDEO_WIDTH, VIDEO_HEIGHT), Image.ANTIALIAS
-        )
+        img = img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.ANTIALIAS)
         return img

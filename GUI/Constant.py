@@ -7,6 +7,7 @@ VIDEO_WIDTH = 1340
 VIDEO_HEIGHT = 730
 FRAME_EXTRACT = False
 FRAME_INTERVAL = 3 if FRAME_EXTRACT else 1
+CSV_RECORD = False
 MODEL_NAME = "yolov8m"
 RESOLUTION = 720
 GRID_SIZE = 200 * RESOLUTION / 720
@@ -28,4 +29,4 @@ DIRECTIONS_COLORS = [
 ]
 AREAS_IGNORED = []
 CAMERA = VideoCapture(0)
-model = YOLO(f"../ObjectDetectionModel/final_models/{MODEL_NAME}/weights/best.pt")
+MODEL = YOLO(f"../ObjectDetectionModel/final_models/{MODEL_NAME}/weights/best.pt")
