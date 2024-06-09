@@ -34,6 +34,7 @@ class PedestrianTrackingPage(tk.Frame):
         self.grid()
         self.cap = None
         self.video_cfg = None
+        self.running_camera_frame = False
 
         self.summary_title = tk.Label(
             self,
@@ -121,8 +122,8 @@ class PedestrianTrackingPage(tk.Frame):
 
         to_rt_tracking_page_button = Button(
             self,
-            text="Tracking",
-            command=self.to_rt_tracking_page,
+            text="Camera",
+            command=self.start_camera_frame,
             padx=10,
             pady=8,
             bg="#3f97df",
@@ -135,10 +136,10 @@ class PedestrianTrackingPage(tk.Frame):
             highlightcolor="#FFF3F3",
             fg="white",
             highlightbackground="#FFF3F3",
-            width=250,
-            height=45,
+            width=300,
+            height=55,
         )
-        to_rt_tracking_page_button.place(x=1135, y=25)
+        to_rt_tracking_page_button.place(x=1405, y=670)
 
     def upload_video(self):
         video_path = filedialog.askopenfilename(
@@ -150,16 +151,17 @@ class PedestrianTrackingPage(tk.Frame):
             self.video_cfg = (fourcc, size, fps)
             self.show_video(detect=True, track=True)
 
-    def show_video(self, detect=False, track=True):
+    def show_video(self, detect=False, track=False):
         track_history = dict()
         direction_history = dict()
         miss_track = dict()
+        video_width = VIDEO_WIDTH
+        video_height = VIDEO_HEIGHT
 
         if self.cap is not None:
             ret, frame = self.cap.read()
             self.init_summary()
-            video_width = 1340
-            video_height = 730
+
             frame_count = 0
 
             while ret:
@@ -175,29 +177,7 @@ class PedestrianTrackingPage(tk.Frame):
                         continue
                 if detect:
                     if not track:
-                        img = Image.fromarray(frame)
-                        img = img.resize((video_width, video_height), Image.ANTIALIAS)
-                        # only detect
-                        results = model(
-                            img, verbose=False, stream=True, device="mps", classes=[0]
-                        )
-                        for r in results:
-                            boxes = r.boxes
-                            for box in boxes:
-                                x1, y1, x2, y2 = box.xyxy[0]
-
-                                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-                                img_t = cv2.rectangle(
-                                    array(img),
-                                    (x1, y1),
-                                    (x2, y2),
-                                    color=(0, 0, 0),
-                                    thickness=2,
-                                )
-                                img = Image.fromarray(img_t)
-                                img = img.resize(
-                                    (video_width, video_height), Image.ANTIALIAS
-                                )
+                        img = self.detection(frame)
                     else:
                         start_time = time()
                         results = model.track(
@@ -209,7 +189,6 @@ class PedestrianTrackingPage(tk.Frame):
                         )[0]
 
                         # Visualize the results on the frame
-                        # results = results[0]
                         annotated_frame = frame  # or result.plot() with bboxes
 
                         center = results.boxes.xywh.cpu().numpy().astype(int)
@@ -290,7 +269,7 @@ class PedestrianTrackingPage(tk.Frame):
 
                 photo = ImageTk.PhotoImage(image=img)
                 self.canvas.create_image(0, 0, anchor="nw", image=photo)
-                self.canvas.image = photo
+                # self.canvas.image = photo
 
                 if frame_count % 30 == 0:
                     # t = time() - start_time
@@ -422,7 +401,7 @@ class PedestrianTrackingPage(tk.Frame):
             bg="#FFFFFF",
             fg="#4f4e4d",
         )
-        self.fps_label_num.place(x=1560, y=715)
+        # self.fps_label_num.place(x=1560, y=715)
 
     def clean_summary(self):
         if self.inbusiness_label is not None:
@@ -442,6 +421,9 @@ class PedestrianTrackingPage(tk.Frame):
     def to_rt_tracking_page(self):
         print("to_rt_tracking_page")
         self.stop_video()
+        # self.controller.show_rt_tracking_page()
+        self.running_camera_frame = True
+        self.show_camera_frame()
 
     def stop_video(self):
         if self.cap is not None:
@@ -449,3 +431,54 @@ class PedestrianTrackingPage(tk.Frame):
             self.cap = None
             self.canvas.image = None
             self.clean_summary()
+
+    def start_camera_frame(self):
+        print("Start camera")
+        self.stop_video()
+        self.running_camera_frame = True
+        self.show_camera_frame()
+
+
+    def show_camera_frame(self):
+        if not self.running_camera_frame:
+            return
+
+        ret, frame = CAMERA.read()
+
+        if ret:
+            print("show_camera_frame")
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame)
+            img = img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.ANTIALIAS)
+            photo = ImageTk.PhotoImage(image=img)
+
+            self.canvas.create_image(0, 0, anchor="nw", image=photo)
+            self.canvas.image = photo
+        self.after(20, self.show_camera_frame)
+
+    def stop_camera_frame(self):
+        self.running_camera_frame = False
+        self.canvas.place_forget()
+
+    @staticmethod
+    def detection(frame):
+        results = model(
+            frame, verbose=False, stream=True, device="mps", classes=[0]
+        )
+        for r in results:
+            boxes = r.boxes
+            for box in boxes:
+                x1, y1, x2, y2 = box.xyxy[0]
+                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                img_t = cv2.rectangle(
+                    frame,
+                    (x1, y1),
+                    (x2, y2),
+                    color=(0, 0, 0),
+                    thickness=2,
+                )
+        img = Image.fromarray(img_t)
+        img = img.resize(
+            (VIDEO_WIDTH, VIDEO_HEIGHT), Image.ANTIALIAS
+        )
+        return img

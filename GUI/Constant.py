@@ -3,6 +3,8 @@ from ultralytics import YOLO
 
 HEIGHT = 850
 WIDTH = 1750
+VIDEO_WIDTH = 1340
+VIDEO_HEIGHT = 730
 FRAME_EXTRACT = False
 FRAME_INTERVAL = 3 if FRAME_EXTRACT else 1
 MODEL_NAME = "yolov8m"
@@ -25,5 +27,5 @@ DIRECTIONS_COLORS = [
     (255, 255, 255),
 ]
 AREAS_IGNORED = []
-# CAMERA = VideoCapture(0)
+CAMERA = VideoCapture(0)
 model = YOLO(f"../ObjectDetectionModel/final_models/{MODEL_NAME}/weights/best.pt")
