@@ -1,11 +1,9 @@
 import colorsys
+import cv2
 import hashlib
+import numpy as np
 import os
 import time
-
-import cv2
-import numpy as np
-
 # from ultralytics import YOLO, RTDETR, YOLO
 # from ultralytics_local import YOLO, RTDETR
 from ultralytics import YOLO

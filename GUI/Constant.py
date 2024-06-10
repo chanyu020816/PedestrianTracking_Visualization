@@ -1,3 +1,4 @@
+import os
 from cv2 import VideoCapture
 from ultralytics import YOLO
 
@@ -29,4 +30,5 @@ DIRECTIONS_COLORS = [
 ]
 AREAS_IGNORED = []
 CAMERA = VideoCapture(0)
-MODEL = YOLO(f"../ObjectDetectionModel/final_models/{MODEL_NAME}/weights/best.pt")
+MODEL_FOLDER = "../ObjectDetectionModel/final_models"
+model = YOLO(os.path.join(MODEL_FOLDER, MODEL_NAME, "weights", "best.pt"))

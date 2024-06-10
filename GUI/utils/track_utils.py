@@ -1,8 +1,6 @@
 import colorsys
 import hashlib
-
-import cv2
-import numpy as np
+from typing import Tuple
 
 horiz_grid = [10, 11, 12, 13]
 verti_grid = [21, 22, 23, 24]
@@ -32,21 +30,21 @@ def get_four_direction(start, end):
     return [direction, dire]
 
 
-def get_horizon_direction(start, end) -> str:
+def get_horizon_direction(start: Tuple[int, int], end: Tuple[int, int]) -> int:
     """
     :return: 1 -> left , 0 -> right
     """
     return int(start[0] <= end[0])
 
 
-def get_vertical_direction(start, end) -> str:
+def get_vertical_direction(start: Tuple[int, int], end: Tuple[int, int]) -> int:
     """
     :return: 1 -> down, 0 -> up
     """
     return int(start[1] <= end[1])
 
 
-def get_eight_direction(start, end) -> int:
+def get_eight_direction(start: Tuple[int, int], end: Tuple[int, int]) -> int:
     quan = get_four_direction(start, end)
     slope = abs((start[1] - end[1]) / (start[0] - end[0] + 1e-7))
     dire = (1 + 2 * quan[1]) + ((quan[0][0] ^ quan[0][1]) ^ (slope >= 1))
@@ -54,10 +52,10 @@ def get_eight_direction(start, end) -> int:
     return dire % 8
 
 
-def get_school_direction(start: int, end: int, grid_size=200, hori_grid_num=7) -> int:
+def get_school_direction(start: Tuple[int, int], end: Tuple[int, int], grid_size=200, horiz_grid_num=7) -> int:
     assert start[0] != -1
 
-    grid = start[0] // grid_size + hori_grid_num * (start[1] // 200)
+    grid = start[0] // grid_size + horiz_grid_num * (start[1] // 200)
 
     if grid in eight_grid:
         dire = get_eight_direction(start=start, end=end)

@@ -1,14 +1,13 @@
+import cv2
+import numpy as np
 import tkinter as tk
 from base64 import b64decode
 from io import BytesIO
 from time import time
 from tkinter import filedialog, ttk
 
-import cv2
-import numpy as np
 from Base64Image import PedestrianTrackingPageBG
 from Constant import *
-from numpy import array
 from PIL import Image, ImageTk
 from tkmacosx import Button
 from utils.track_utils import *
@@ -187,7 +186,7 @@ class PedestrianTrackingPage(tk.Frame):
                         img = self.detection(frame)
                     else:
                         start_time = time()
-                        results = MODEL.track(
+                        results = model.track(
                             frame,
                             persist=True,
                             device="mps",
@@ -492,7 +491,7 @@ class PedestrianTrackingPage(tk.Frame):
 
     @staticmethod
     def detection(frame):
-        results = MODEL(frame, verbose=False, stream=True, device="mps", classes=[0])
+        results = model(frame, verbose=False, stream=True, device="mps", classes=[0])
         for r in results:
             boxes = r.boxes
             for box in boxes:
